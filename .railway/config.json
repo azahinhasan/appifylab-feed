@@ -6,11 +6,13 @@
   "services": {
     "backend": {
       "path": "./backend",
+      "buildCommand": "npm run build",
       "startCommand": "npm run start:prod",
       "healthcheckPath": "/health"
     },
     "frontend": {
       "path": "./frontend",
+      "buildCommand": "npm run build",
       "startCommand": "npm run preview",
       "healthcheckPath": "/"
     }
