@@ -5620,7 +5620,7 @@
     position: absolute;
     top: 0px;
     right: 0;
-    min-width: 312px;
+    min-width: 200px;
     background: var(--bg2);
     -webkit-box-shadow: 0px 10px 20px rgb(0 0 0 / 8%);
     box-shadow: 0px 10px 20px rgb(0 0 0 / 8%);

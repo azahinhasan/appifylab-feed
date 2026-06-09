@@ -8,6 +8,7 @@ import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './apps/auth/auth.module';
 import { UsersModule } from './apps/users/users.module';
+import { PostsModule } from './apps/posts/posts.module';
 import { CommentsModule } from './apps/comments/comments.module';
 import { UploadModule } from './apps/upload/upload.module';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -30,6 +31,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
     DatabaseModule,
     AuthModule,
     UsersModule,
+    PostsModule,
     CommentsModule,
     UploadModule,
   ],

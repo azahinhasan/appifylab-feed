@@ -35,6 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     },
     staleTime: Infinity, // keep session active without constant background refetching
+    retry: false, // Don't retry if the user has no session (saves network requests and avoids console noise)
   });
 
   useEffect(() => {
