@@ -24,10 +24,15 @@ export class AuthController {
   ) {
     const result = await this.authService.login(loginDto);
 
-    res.cookie('access_token', result.token, {
+    const baseCookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 24 * 60 * 60 * 1000,
+    };
+
+    res.cookie('access_token', result.token, {
+      ...baseCookieOptions,
+      ...(process.env.NODE_ENV === 'production' ? { sameSite: 'none' } : {}),
     });
 
     return {
@@ -38,9 +43,14 @@ export class AuthController {
 
   @Post('logout')
   async logout(@Res({ passthrough: true }) res: any) {
-    res.clearCookie('access_token', {
+    const baseCookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
+    };
+
+    res.clearCookie('access_token', {
+      ...baseCookieOptions,
+      ...(process.env.NODE_ENV === 'production' ? { sameSite: 'none' } : {}),
     });
     return { message: 'Logged out successfully' };
   }

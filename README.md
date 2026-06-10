@@ -2,6 +2,11 @@
 
 ## Quick Start (Backend + Frontend)
 
+## Deployed URL
+`https://appifylab-feed.onrender.com` <br/>
+Note: This is a free instance that will spin down with inactivity, which can delay requests by ~50 seconds while it wakes up.
+
+
 ### Backend (NestJS)
 1. `cd backend`
 2. `npm install`
