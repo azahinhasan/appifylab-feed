@@ -80,11 +80,12 @@ export const useComments = (postId: string) => {
 
   const deleteCommentMutation = useMutation({
     mutationFn: (commentId: string) => {
-      return apiClient.delete(`/comments/${commentId}`);
+      return apiClient.delete<{ removed: number }>(`/comments/${commentId}`);
     },
-    onSuccess: (result: { removed: number }) => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
-      adjustPostCommentsCount(-result.removed);
+      const removedCount = typeof result?.removed === "number" ? result.removed : 1;
+      adjustPostCommentsCount(-removedCount);
     },
   });
 
