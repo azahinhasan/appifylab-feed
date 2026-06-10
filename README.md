@@ -1,4 +1,4 @@
-# Social Feed App — Backend API Reference
+# Social Feed App : Backend API Reference
 
 ## Quick Start (Backend + Frontend)
 
@@ -24,3 +24,14 @@ Note: This is a free instance that will spin down with inactivity, which can del
 4. Start the app: `npm run dev` (Vite defaults to `http://localhost:5173`)
 
 > Keep both servers running simultaneously for a fully functional experience.
+
+### Future Improvements
+- Rate limiting & throttling : protect endpoints from abuse and attacks.
+- Redis caching : cache feed and post queries to reduce DB load at scale.
+- Worker queues : offload image processing to background jobs.
+- Cloud storage : move uploads to S3 or similar with MIME validation, virus scanning, and CDN-served signed URLs.
+- Observability : structured logging (Pino) + distributed tracing (OpenTelemetry) for fast debugging.
+- Auth hardening : refresh tokens, rotating JWT keys, CSRF token and optional MFA.
+- Resilience : health checks, graceful shutdown, and retry logic for Mongo/Redis failures.
+- Real-time feed : WebSocket or SSE so new posts appear without a page refresh.
+- Full-text search : for any type of searching via MongoDB Atlas Search or Elasticsearch.
