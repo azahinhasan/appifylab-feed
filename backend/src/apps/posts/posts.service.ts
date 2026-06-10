@@ -1,19 +1,40 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Post, PostDocument } from '../../database/schemas/post.schema';
 import { CreatePostDto } from './dto/create-post.dto';
+import { UploadService } from '../upload/upload.service';
+
+export type UploadedImageFile = {
+  buffer: Buffer;
+  originalname: string;
+};
 
 @Injectable()
 export class PostsService {
   constructor(
     @InjectModel(Post.name) private readonly postModel: Model<PostDocument>,
+    private readonly uploadService: UploadService,
   ) {}
 
-  async create(userId: string, dto: CreatePostDto): Promise<PostDocument> {
+  async create(
+    userId: string,
+    dto: CreatePostDto,
+    file?: UploadedImageFile | null,
+    hostUrl?: string,
+  ): Promise<PostDocument> {
+    let imageUrl = dto.imageUrl || null;
+
+    if (file) {
+      if (!hostUrl) {
+        throw new BadRequestException('Host URL is required to save the uploaded image.');
+      }
+      imageUrl = await this.uploadService.saveImage(file, hostUrl);
+    }
+
     const post = await this.postModel.create({
       content: dto.content,
-      imageUrl: dto.imageUrl || null,
+      imageUrl,
       visibility: dto.visibility || 'public',
       author: new Types.ObjectId(userId),
       likedBy: [],
@@ -82,7 +103,11 @@ export class PostsService {
       throw new ForbiddenException('Only the author can delete this post');
     }
 
-    await this.postModel.deleteOne({ _id: post._id }).exec();
+    await Promise.all([
+      this.postModel.deleteOne({ _id: post._id }).exec(),
+      this.uploadService.deleteImageByUrl(post.imageUrl),
+    ]);
+
     return { success: true, message: 'Post deleted successfully' };
   }
 

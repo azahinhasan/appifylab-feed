@@ -37,8 +37,8 @@ export const usePosts = () => {
   };
 
   const createPostMutation = useMutation({
-    mutationFn: (newPost: { content: string; imageUrl?: string | null; visibility?: string }) => {
-      return apiClient.post<Post>('/posts', newPost);
+    mutationFn: (formData: FormData) => {
+      return apiClient.post<Post>('/posts', formData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });

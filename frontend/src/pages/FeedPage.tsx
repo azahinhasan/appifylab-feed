@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { usePosts } from '../hooks/usePosts';
-import { apiClient } from '../services/apiClient';
 import PostCard from '../components/PostCard';
 
 const FeedPage: React.FC = () => {
@@ -16,28 +15,23 @@ const FeedPage: React.FC = () => {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [postContent, setPostContent] = useState('');
   const [postVisibility, setPostVisibility] = useState<'public' | 'private'>('public');
-  const [uploadingImage, setUploadingImage] = useState(false);
   const [attachedImageFile, setAttachedImageFile] = useState<File | null>(null);
   const [attachedImagePreview, setAttachedImagePreview] = useState<string | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
 
-  // Search state (visual only)
   const [searchQuery, setSearchQuery] = useState('');
 
   // Infinite Scroll ref
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
-  // Toggle Dark Mode
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
   };
 
-  // Get initials for profile picture fallback
   const getInitials = (firstName?: string, lastName?: string) => {
     return `${(firstName || '').charAt(0)}${(lastName || '').charAt(0)}`.toUpperCase() || '?';
   };
 
-  // Handle Image Upload (defer server upload until submit)
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -55,27 +49,19 @@ const FeedPage: React.FC = () => {
     setAttachedImagePreview(URL.createObjectURL(file));
   };
 
-  // Handle Create Post
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!postContent.trim() && !attachedImageFile) return;
 
     try {
-      let uploadedImageUrl: string | null = null;
-
+      const formData = new FormData();
+      formData.append('content', postContent);
+      formData.append('visibility', postVisibility);
       if (attachedImageFile) {
-        setUploadingImage(true);
-        const formData = new FormData();
-        formData.append('file', attachedImageFile);
-        const response = await apiClient.post<{ url: string }>('/uploads/image', formData);
-        uploadedImageUrl = response.url;
+        formData.append('image', attachedImageFile);
       }
 
-      await createPost({
-        content: postContent,
-        imageUrl: uploadedImageUrl,
-        visibility: postVisibility,
-      });
+      await createPost(formData);
 
       // Clear input form
       setPostContent('');
@@ -86,9 +72,8 @@ const FeedPage: React.FC = () => {
       setAttachedImagePreview(null);
       setPostVisibility('public');
     } catch (err) {
+      alert(err?.message || 'Failed to create post');
       console.error('Failed to create post:', err);
-    } finally {
-      setUploadingImage(false);
     }
   };
 
@@ -365,12 +350,6 @@ const FeedPage: React.FC = () => {
                           </div>
                         )}
 
-                        {uploadingImage && (
-                          <div className="text-muted mb-3" style={{ fontSize: '13px' }}>
-                            Uploading image...
-                          </div>
-                        )}
-
                         {imageError && (
                           <div className="text-danger mb-3" style={{ fontSize: '13px' }}>
                             {imageError}
@@ -408,7 +387,7 @@ const FeedPage: React.FC = () => {
                           <button
                             type="submit"
                             className="btn btn-primary px-4 py-1.5 d-flex align-items-center"
-                            disabled={isCreating || uploadingImage || (!postContent.trim() && !attachedImageFile)}
+                            disabled={isCreating || (!postContent.trim() && !attachedImageFile)}
                             style={{ borderRadius: '6px', fontWeight: '500', gap: '8px' }}
                           >
                             {isCreating ? 'Posting...' : 'Post'} 🚀

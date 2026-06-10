@@ -1,23 +1,47 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Delete,
-  Param,
+  BadRequestException,
   Body,
-  Req,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
   Query,
+  Req,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
+import type { UploadedImageFile } from './posts.service';
 
 @Controller('posts')
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
   @Post()
-  async create(@Req() req: any, @Body() dto: CreatePostDto) {
-    return this.postsService.create(req.user.id, dto);
+  @UseInterceptors(
+    FileInterceptor('image', {
+      limits: { fileSize: 5 * 1024 * 1024 },
+      fileFilter: (req, file, callback) => {
+        if (!file.originalname.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+          return callback(
+            new BadRequestException('Only image files (jpg, jpeg, png, gif, webp) are allowed!'),
+            false,
+          );
+        }
+        callback(null, true);
+      },
+    }),
+  )
+  async create(
+    @Req() req: any,
+    @Body() dto: CreatePostDto,
+    @UploadedFile() file?: UploadedImageFile | null,
+  ) {
+    const hostUrl = `${req.protocol}://${req.get('host')}`;
+    return this.postsService.create(req.user.id, dto, file, hostUrl);
   }
 
   @Get()

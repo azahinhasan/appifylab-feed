@@ -33,6 +33,44 @@ export class UploadService {
     return `${hostUrl}/uploads/${fileName}`;
   }
 
+  async deleteImageByUrl(imageUrl?: string | null): Promise<void> {
+    if (!imageUrl) return;
+
+    const fileName = this.extractFileName(imageUrl);
+    if (!fileName) return;
+
+    const filePath = path.join(this.uploadDir, fileName);
+
+    try {
+      await fs.promises.unlink(filePath);
+    } catch (error: any) {
+      if (error?.code === 'ENOENT') {
+        return;
+      }
+      throw error;
+    }
+  }
+
+  private extractFileName(imageUrl: string): string | null {
+    if (!imageUrl) return null;
+
+    const normalized = imageUrl.replace(/\\/g, '/');
+    const segments = normalized.split('/');
+    const uploadsIndex = segments.findIndex((segment) => segment.toLowerCase() === 'uploads');
+    if (uploadsIndex === -1 || uploadsIndex === segments.length - 1) {
+      return null;
+    }
+
+    const filePath = segments.slice(uploadsIndex + 1).join('/');
+    if (!filePath) {
+      return null;
+    }
+
+    const withoutQuery = filePath.split(/[?#]/)[0];
+    const sanitized = path.normalize(withoutQuery).replace(/^([.]{2}[\/])+/, '');
+    return sanitized;
+  }
+
   private getMimeTypeFromBuffer(buffer: Buffer): string | null {
     if (buffer.length < 12) return null;
 
