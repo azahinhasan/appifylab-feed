@@ -17,7 +17,8 @@ const FeedPage: React.FC = () => {
   const [postContent, setPostContent] = useState('');
   const [postVisibility, setPostVisibility] = useState<'public' | 'private'>('public');
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [attachedImageUrl, setAttachedImageUrl] = useState<string | null>(null);
+  const [attachedImageFile, setAttachedImageFile] = useState<File | null>(null);
+  const [attachedImagePreview, setAttachedImagePreview] = useState<string | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
 
   // Search state (visual only)
@@ -36,52 +37,58 @@ const FeedPage: React.FC = () => {
     return `${(firstName || '').charAt(0)}${(lastName || '').charAt(0)}`.toUpperCase() || '?';
   };
 
-  // Handle Image Upload
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle Image Upload (defer server upload until submit)
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Client-side file size validation (5MB)
     if (file.size > 5 * 1024 * 1024) {
       setImageError('File size exceeds the 5MB limit.');
       return;
     }
 
-    setUploadingImage(true);
     setImageError(null);
-
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await apiClient.post<{ url: string }>('/uploads/image', formData);
-      setAttachedImageUrl(response.url);
-    } catch (err: any) {
-      console.error('Image upload failed:', err);
-      setImageError(err.message || 'Image upload failed. Please try again.');
-    } finally {
-      setUploadingImage(false);
+    if (attachedImagePreview) {
+      URL.revokeObjectURL(attachedImagePreview);
     }
+    setAttachedImageFile(file);
+    setAttachedImagePreview(URL.createObjectURL(file));
   };
 
   // Handle Create Post
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!postContent.trim() && !attachedImageUrl) return;
+    if (!postContent.trim() && !attachedImageFile) return;
 
     try {
+      let uploadedImageUrl: string | null = null;
+
+      if (attachedImageFile) {
+        setUploadingImage(true);
+        const formData = new FormData();
+        formData.append('file', attachedImageFile);
+        const response = await apiClient.post<{ url: string }>('/uploads/image', formData);
+        uploadedImageUrl = response.url;
+      }
+
       await createPost({
         content: postContent,
-        imageUrl: attachedImageUrl,
+        imageUrl: uploadedImageUrl,
         visibility: postVisibility,
       });
 
       // Clear input form
       setPostContent('');
-      setAttachedImageUrl(null);
+      if (attachedImagePreview) {
+        URL.revokeObjectURL(attachedImagePreview);
+      }
+      setAttachedImageFile(null);
+      setAttachedImagePreview(null);
       setPostVisibility('public');
     } catch (err) {
       console.error('Failed to create post:', err);
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -338,13 +345,19 @@ const FeedPage: React.FC = () => {
                         </div>
 
                         {/* Image Preview attachment */}
-                        {attachedImageUrl && (
+                        {attachedImagePreview && (
                           <div className="position-relative mb-3 rounded overflow-hidden" style={{ maxHeight: '200px', width: 'fit-content' }}>
-                            <img src={attachedImageUrl} alt="Attachment Preview" style={{ maxHeight: '200px', objectFit: 'contain' }} />
+                            <img src={attachedImagePreview} alt="Attachment Preview" style={{ maxHeight: '200px', objectFit: 'contain' }} />
                             <button
                               type="button"
                               className="btn btn-dark btn-sm position-absolute rounded-circle"
-                              onClick={() => setAttachedImageUrl(null)}
+                              onClick={() => {
+                                if (attachedImagePreview) {
+                                  URL.revokeObjectURL(attachedImagePreview);
+                                }
+                                setAttachedImageFile(null);
+                                setAttachedImagePreview(null);
+                              }}
                               style={{ top: '8px', right: '8px', opacity: 0.8, border: 'none', fontSize: '12px', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                             >
                               &times;
@@ -395,7 +408,7 @@ const FeedPage: React.FC = () => {
                           <button
                             type="submit"
                             className="btn btn-primary px-4 py-1.5 d-flex align-items-center"
-                            disabled={isCreating || uploadingImage || (!postContent.trim() && !attachedImageUrl)}
+                            disabled={isCreating || uploadingImage || (!postContent.trim() && !attachedImageFile)}
                             style={{ borderRadius: '6px', fontWeight: '500', gap: '8px' }}
                           >
                             {isCreating ? 'Posting...' : 'Post'} 🚀
