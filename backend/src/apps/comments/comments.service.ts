@@ -17,35 +17,58 @@ export class CommentsService {
     @InjectModel(Post.name) private readonly postModel: Model<PostDocument>,
   ) {}
 
+  // Use Mongo transactions so simultaneous create/delete calls keep commentsCount in sync
   async create(postId: string, userId: string, dto: CreateCommentDto): Promise<CommentDocument> {
-    const post = await this.postModel.findById(postId).exec();
-    if (!post) {
-      throw new NotFoundException('Post not found');
+    const session = await this.commentModel.db.startSession();
+    let createdComment: CommentDocument | null = null;
+
+    try {
+      await session.withTransaction(async () => {
+        const post = await this.postModel.findById(postId).session(session).exec();
+        if (!post) {
+          throw new NotFoundException('Post not found');
+        }
+
+        let parentId: Types.ObjectId | null = null;
+        if (dto.parentComment) {
+          const parent = await this.commentModel.findById(dto.parentComment).session(session).exec();
+          if (!parent) {
+            throw new NotFoundException('Parent comment not found');
+          }
+          if (parent.post.toString() !== postId) {
+            throw new BadRequestException('Parent comment must belong to the same post');
+          }
+          parentId = new Types.ObjectId(dto.parentComment);
+        }
+
+        const [comment] = await this.commentModel.create(
+          [
+            {
+              content: dto.content,
+              author: new Types.ObjectId(userId),
+              post: new Types.ObjectId(postId),
+              parentComment: parentId,
+              likedBy: [],
+            },
+          ],
+          { session },
+        );
+
+        await this.postModel
+          .updateOne({ _id: postId }, { $inc: { commentsCount: 1 } }, { session })
+          .exec();
+
+        createdComment = await comment.populate('author', 'firstName lastName email');
+      });
+    } finally {
+      await session.endSession();
     }
 
-    let parentId: Types.ObjectId | null = null;
-    if (dto.parentComment) {
-      const parent = await this.commentModel.findById(dto.parentComment).exec();
-      if (!parent) {
-        throw new NotFoundException('Parent comment not found');
-      }
-      if (parent.post.toString() !== postId) {
-        throw new BadRequestException('Parent comment must belong to the same post');
-      }
-      parentId = new Types.ObjectId(dto.parentComment);
+    if (!createdComment) {
+      throw new Error('Failed to create comment');
     }
 
-    const comment = await this.commentModel.create({
-      content: dto.content,
-      author: new Types.ObjectId(userId),
-      post: new Types.ObjectId(postId),
-      parentComment: parentId,
-      likedBy: [],
-    });
-
-    await this.postModel.findByIdAndUpdate(postId, { $inc: { commentsCount: 1 } }).exec();
-
-    return comment.populate('author', 'firstName lastName email');
+    return createdComment;
   }
 
   async getCommentsForPost(postId: string, limit = 10, cursor?: string) {
@@ -96,20 +119,49 @@ export class CommentsService {
   }
 
   async delete(commentId: string, userId: string) {
-    const comment = await this.commentModel.findById(commentId).exec();
-    if (!comment) {
-      throw new NotFoundException('Comment not found');
+    const session = await this.commentModel.db.startSession();
+let totalRemoved = 0;
+
+    try {
+      await session.withTransaction(async () => {
+        const comment = await this.commentModel.findById(commentId).session(session).exec();
+        if (!comment) {
+          throw new NotFoundException('Comment not found');
+        }
+
+        if (comment.author.toString() !== userId) {
+          throw new ForbiddenException('You can only delete your own comments');
+        }
+
+        const postObjectId = new Types.ObjectId(comment.post.toString());
+
+        const repliesDeletion = await this.commentModel
+          .deleteMany({ parentComment: comment._id })
+          .session(session)
+          .exec();
+        const repliesRemoved = repliesDeletion.deletedCount ?? 0;
+        totalRemoved = 1 + repliesRemoved;
+
+        await this.commentModel.deleteOne({ _id: commentId }).session(session).exec();
+
+        const updatedPost = await this.postModel
+          .findByIdAndUpdate(
+            postObjectId,
+            { $inc: { commentsCount: -totalRemoved } },
+            { new: true, session },
+          )
+          .exec();
+
+        if (updatedPost && updatedPost.commentsCount < 0) {
+          updatedPost.commentsCount = 0;
+          await updatedPost.save({ session });
+        }
+      });
+    } finally {
+      await session.endSession();
     }
 
-    if (comment.author.toString() !== userId) {
-      throw new ForbiddenException('You can only delete your own comments');
-    }
-
-    await this.commentModel.findByIdAndDelete(commentId).exec();
-    await this.commentModel.deleteMany({ parentComment: comment._id }).exec();
-    await this.postModel.findByIdAndUpdate(comment.post, { $inc: { commentsCount: -1 } }).exec();
-
-    return { success: true };
+    return { success: true, removed: totalRemoved };
   }
 
   async toggleLike(commentId: string, userId: string) {

@@ -144,7 +144,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         </div>
 
         {/* Post Content Title */}
-        <h4 className="_feed_inner_timeline_post_title" style={{ fontSize: '15px', fontWeight: 'normal', color: '#444', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
+        <h4 className="_feed_inner_timeline_post_title" style={{ fontSize: '15px', fontWeight: 'normal', color: '#444', lineHeight: '1.5', whiteSpace: 'pre-wrap', textAlign: 'left' }}>
           {post.content}
         </h4>
 
@@ -168,9 +168,6 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       {/* Reactions and Comments totals */}
       <div className="_feed_inner_timeline_total_reacts _padd_r24 _padd_l24 _mar_b26 d-flex justify-content-between align-items-center">
         <div className="_feed_inner_timeline_total_reacts_image d-flex align-items-center">
-          <img src="/src/assets/images/react_img1.png" alt="Image" className="_react_img1" />
-          <img src="/src/assets/images/react_img2.png" alt="Image" className="_react_img" />
-          <img src="/src/assets/images/react_img3.png" alt="Image" className="_react_img _rect_img_mbl_none" />
           <button
             onClick={() => setIsLikesModalOpen(true)}
             className="btn btn-link p-0 text-decoration-none ms-2"
@@ -185,7 +182,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               <span>{post.commentsCount}</span> Comment
             </a>
           </p>
-          <p className="_feed_inner_timeline_total_reacts_para2 mb-0"><span>122</span> Share</p>
+          <p className="_feed_inner_timeline_total_reacts_para2 mb-0"><span>0</span> Share</p>
         </div>
       </div>
 
@@ -213,7 +210,6 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           </span>
         </button>
         <button
-          onClick={() => alert('Post shared successfully.')}
           className="_feed_inner_timeline_reaction_share _feed_reaction"
           style={{ background: 'transparent', border: 'none' }}
         >

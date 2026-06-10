@@ -91,11 +91,12 @@ const FeedPage: React.FC = () => {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) {
+        const entry = entries[0];
+        if (entry.isIntersecting && !isFetchingNextPage) {
           fetchNextPage();
         }
       },
-      { threshold: 1.0 }
+      { threshold: 0.1, rootMargin: '200px' }
     );
 
     const currentRef = loadMoreRef.current;
@@ -108,7 +109,7 @@ const FeedPage: React.FC = () => {
         observer.unobserve(currentRef);
       }
     };
-  }, [hasNextPage, fetchNextPage]);
+  }, [hasNextPage, fetchNextPage, isFetchingNextPage]);
 
   const posts = data?.pages.flatMap((page) => page.posts) || [];
 
