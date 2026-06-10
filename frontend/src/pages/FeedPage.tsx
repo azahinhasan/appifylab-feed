@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { usePosts } from '../hooks/usePosts';
 import PostCard from '../components/PostCard';
-import logoImage from '../assets/images/logo-copy.svg';
 
 const FeedPage: React.FC = () => {
   const { user, logout } = useAuth();
@@ -135,7 +134,8 @@ const FeedPage: React.FC = () => {
             <div className="_logo_wrap">
               <a className="navbar-brand" href="#0">
                 <span className="h3 fw-bold text-primary mb-0 d-flex align-items-center" style={{ gap: '8px' }}>
-                  <img src={logoImage} alt="Logo" style={{ width: '32px' }} />
+                  <img src="/logo-copy.svg" alt="Logo" style={{ width: '32px' }} />
+                  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
                   Buddy Script
                 </span>
               </a>
