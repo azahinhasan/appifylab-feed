@@ -1,5 +1,11 @@
 # Social Feed App : Backend API Reference
 
+## Tech Stack
+- Nest.js
+- React.js
+- MongoDB
+- JWT
+
 ## Quick Start (Backend + Frontend)
 
 ## Deployed URL
@@ -26,8 +32,8 @@ Note: This is a free instance that will spin down with inactivity, which can del
 > Keep both servers running simultaneously for a fully functional experience.
 
 ### Future Improvements
-- Rate limiting & throttling : protect endpoints from abuse and attacks.
 - Redis caching : cache feed and post queries to reduce DB load at scale.
+- UI responsive: make UI more responsive and mobile-friendly.
 - Worker queues : offload image processing to background jobs.
 - Cloud storage : move uploads to S3 or similar with MIME validation, virus scanning, and CDN-served signed URLs.
 - Observability : structured logging (Pino) + distributed tracing (OpenTelemetry) for fast debugging.

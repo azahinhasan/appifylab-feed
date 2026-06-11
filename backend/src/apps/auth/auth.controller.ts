@@ -32,6 +32,7 @@ export class AuthController {
 
     res.cookie('access_token', result.token, {
       ...baseCookieOptions,
+      // Allow cross-site cookies only in production. Since in local can't use cross-site cookies.
       ...(process.env.NODE_ENV === 'production' ? { sameSite: 'none' } : {}),
     });
 

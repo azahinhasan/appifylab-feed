@@ -460,7 +460,7 @@ const FeedPage: React.FC = () => {
                     <hr className="_underline my-2" />
                     <div className="_right_inner_area_info_ppl mt-3">
                       <div className="_right_inner_area_info_box d-flex align-items-center mb-3" style={{ gap: '10px' }}>
-                        <div className="avatar-fallback d-flex align-items-center justify-content-center bg-warning text-white rounded-circle" style={{ width: '40px', height: '40px', fontWeight: 'bold' }}>RS</div>
+                        <div className="avatar-fallback d-flex align-items-center justify-content-center bg-warning text-white rounded-circle" style={{ width: '35px', height: '35px', fontWeight: 'bold', fontSize: '14px' }}>RS</div>
                         <div className="_right_inner_area_info_box_txt">
                           <h5 className="_right_inner_area_info_box_title mb-0" style={{ fontSize: '13px', fontWeight: '600' }}>Radovan SkillArena</h5>
                           <p className="_right_inner_area_info_box_para text-muted mb-0" style={{ fontSize: '11px' }}>Founder & CEO at Trophy</p>
