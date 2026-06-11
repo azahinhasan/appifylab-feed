@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../services/apiClient';
+import { useLocation } from 'react-router-dom';
 
 export interface User {
   _id: string;
@@ -23,6 +24,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const queryClient = useQueryClient();
+  const location = useLocation();
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
   // Rehydrate auth state from cookie on app load using useQuery
   const { data: user = null, isLoading } = useQuery<User | null>({
@@ -36,6 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     },
     staleTime: Infinity, // keep session active without constant background refetching
     retry: false, // Don't retry if the user has no session (saves network requests and avoids console noise)
+    enabled: !isAuthPage,
   });
 
   useEffect(() => {
