@@ -41,3 +41,4 @@ Note: This is a free instance that will spin down with inactivity, which can del
 - Resilience : health checks, graceful shutdown, and retry logic for Mongo/Redis failures.
 - Real-time feed : WebSocket or SSE so new posts appear without a page refresh.
 - Full-text search : for any type of searching via MongoDB Atlas Search or Elasticsearch.
+- Loading states : add loading indicators for better UX during API calls.
